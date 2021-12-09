@@ -47,6 +47,9 @@ namespace Battleship.GameController
                 {
                     if (position.Equals(shot))
                     {
+                        position.Ship = ship;
+                        position.WasHit = true;
+                        shot.Ship = ship;
                         return true;
                     }
                 }
@@ -65,10 +68,10 @@ namespace Battleship.GameController
         {
             return new List<Ship>()
                        {
-                           new Ship() { Name = "Aircraft Carrier", Size = 5, Color = ConsoleColor.Blue }, 
-                           new Ship() { Name = "Battleship", Size = 4, Color = ConsoleColor.Red }, 
-                           new Ship() { Name = "Submarine", Size = 3, Color = ConsoleColor.Gray }, 
-                           new Ship() { Name = "Destroyer", Size = 3, Color = ConsoleColor.Yellow }, 
+                           new Ship() { Name = "Aircraft Carrier", Size = 5, Color = ConsoleColor.Blue },
+                           new Ship() { Name = "Battleship", Size = 4, Color = ConsoleColor.Red },
+                           new Ship() { Name = "Submarine", Size = 3, Color = ConsoleColor.Gray },
+                           new Ship() { Name = "Destroyer", Size = 3, Color = ConsoleColor.Yellow },
                            new Ship() { Name = "Patrol Boat", Size = 2, Color = ConsoleColor.Green }
                        };
         }
@@ -92,7 +95,7 @@ namespace Battleship.GameController
             var random = new Random();
             var letter = (Letters)random.Next(size);
             var number = random.Next(size);
-            var position = new Position(letter, number);
+            var position = new Position(letter, number, null);
             return position;
         }
      }

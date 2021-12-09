@@ -47,6 +47,11 @@ namespace Battleship.GameController.Contracts
         /// </summary>
         public int Size { get; set; }
 
+        /// <summary>
+        /// Indicating that ship sunk
+        /// </summary>
+        public bool IsSunk { get; set; }
+
         #endregion
 
         #region Public Methods and Operators
@@ -57,16 +62,15 @@ namespace Battleship.GameController.Contracts
         /// <param name="input">
         /// The input.
         /// </param>
-        public void AddPosition(string input)
+        public bool AddPosition(string input)
         {
-            if (Positions == null)
-            {
-                Positions = new List<Position>();
-            }
+            var position = Position.ParsePosition(input);
+            if (position == null)
+                return false;
 
-            var letter = (Letters)Enum.Parse(typeof(Letters), input.ToUpper().Substring(0, 1));
-            var number = int.Parse(input.Substring(1, 1));
-            Positions.Add(new Position { Column = letter, Row = number });
+            position.Ship = this;
+            Positions.Add(position);
+            return true;
         }
 
         public bool IsPlaced

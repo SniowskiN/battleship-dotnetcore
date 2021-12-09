@@ -37,5 +37,25 @@
 
             Assert.IsTrue(result);
         }
+
+        [TestMethod]
+        public void AddValidPosition()
+        {
+            var ship = new Ship() { Name = "TestShip", Size = 3};
+
+            var result = ship.AddPosition("A1");
+
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void AddInvalidPosition()
+        {
+            var ship = new Ship() { Name = "TestShip", Size = 3 };
+
+            var result = ship.AddPosition("AA");
+
+            Assert.IsFalse(result);
+        }
     }
 }

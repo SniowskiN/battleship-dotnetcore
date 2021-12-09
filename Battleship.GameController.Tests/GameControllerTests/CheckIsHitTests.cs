@@ -1,9 +1,8 @@
 ﻿namespace Battleship.GameController.Tests.GameControllerTests
 {
     using System;
-
+    using System.Linq;
     using Battleship.GameController.Contracts;
-
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     /// <summary>
@@ -12,27 +11,20 @@
     [TestClass]
     public class GameControllerTests
     {
+        private TestHelpers testHelpers = new TestHelpers();
+
         /// <summary>
         /// The should hit the ship.
         /// </summary>
         [TestMethod]
         public void ShouldHitTheShip()
         {
-            var ships = GameController.InitializeShips();
+            var ships = GameController.InitializeShips().ToList();
+            testHelpers.DeployFleet(ships);
 
-            var counter = 0;
-            foreach (var ship in ships)
-            {
-                var letter = (Letters)counter;
-                for (int i = 0; i < ship.Size; i++)
-                {
-                    ship.Positions.Add(new Position(letter, i));
-                }
+            var inShipPos = testHelpers.GetInShipPosition(ships);
 
-                counter++;
-            }
-
-            var result = GameController.CheckIsHit(ships, new Position(Letters.A, 1));
+            var result = GameController.CheckIsHit(ships, inShipPos);
             Assert.IsTrue(result);
         }
 
@@ -42,21 +34,12 @@
         [TestMethod]
         public void ShouldNotHitTheShip()
         {
-            var ships = GameController.InitializeShips();
+            var ships = GameController.InitializeShips().ToList();
+            testHelpers.DeployFleet(ships);
 
-            var counter = 0;
-            foreach (var ship in ships)
-            {
-                var letter = (Letters)counter;
-                for (int i = 0; i < ship.Size; i++)
-                {
-                    ship.Positions.Add(new Position(letter, i));
-                }
+            var notInShipPos = testHelpers.GetNotInShipPosition(ships);
 
-                counter++;
-            }
-
-            var result = GameController.CheckIsHit(ships, new Position(Letters.H, 1));
+            var result = GameController.CheckIsHit(ships, notInShipPos);
             Assert.IsFalse(result);
         }
 
@@ -78,6 +61,23 @@
         public void ThrowExceptionIfShipIsNull()
         {
             GameController.CheckIsHit(null, new Position(Letters.H, 1));
+        }
+
+        [TestMethod]
+        public void SimulatePlay()
+        {
+            bool isHit = false;
+            var ships = GameController.InitializeShips().ToList();
+            testHelpers.DeployFleet(ships);
+            foreach (var ship in ships)
+            {
+                foreach(var pos in ship.Positions)
+                  isHit = GameController.CheckIsHit(ships, pos);
+            }
+
+            var result = ships.Where(x => !x.IsSunk).Count();
+
+            Assert.AreEqual(0, result);
         }
     }
 }
