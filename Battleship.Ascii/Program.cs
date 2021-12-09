@@ -11,8 +11,12 @@ namespace Battleship.Ascii
     public class Program
     {
         private static List<Ship> myFleet;
-
         private static List<Ship> enemyFleet;
+        private static List<Position> myShots;
+        private static List<Position> enemyShots;
+
+        private const ConsoleColor myColor = ConsoleColor.DarkGreen;
+        private const ConsoleColor enemyColor = ConsoleColor.DarkYellow;
 
         private const ConsoleColor hitColor = ConsoleColor.Red;
         private const ConsoleColor missColor = ConsoleColor.Blue;
@@ -59,20 +63,29 @@ namespace Battleship.Ascii
 
             do
             {
-                Console.WriteLine();
-                Console.WriteLine("Player, it's your turn");
+                WriteColor(myColor, "\n*****************************************\n", null);
+                WriteColor(myColor,"Player, it's your turn\n", null);
+                WriteColor(myColor, "*****************************************\n\n", null);
 
                 Position position;
                 do
                 {
-                    Console.WriteLine("Enter coordinates for your shot :");
+                    WriteColor(myColor, "Enter coordinates for your shot : ", null);
                     position = Position.ParsePosition(Console.ReadLine());
 
                     if (position != null)
                     {
+                        if (myShots.Contains(position))
+                        {
+                            WriteColor(myColor, "You've already shot that position. Try another.\n");
+                            continue;
+                        }
+
+                        myShots.Add(position);
+                        Console.WriteLine();
                         break;
                     }
-                    Console.WriteLine("Invalid position, try again.");
+                    WriteColor(myColor, "Invalid position, try again.\n", null);
                 } while (true);
 
                 var isHit = GameController.CheckIsHit(enemyFleet, position);
@@ -80,24 +93,35 @@ namespace Battleship.Ascii
                 if (isHit)
                     ShowExplosion();
 
-                WriteColor(isHit ? hitColor : missColor, isHit ? "Yeah ! Nice hit !" : "Miss", null, "\n");
+                WriteColor(isHit ? hitColor : missColor, isHit ? "Yeah ! Nice hit !" : "Miss", null, "\n\n");
 
                 if (isHit && position.Ship != null && position.Ship.IsSunk)
                 {
-                    Console.WriteLine("Ship sunk");
+                    WriteColor(enemyColor, $"Enemy ship sunk ({position.Ship.Name} {new string('o',position.Ship.Size)})", null, "\n");
+                    ShowStatus(enemyFleet, enemyColor);
                 }
 
                 if (enemyFleet.Where(x => !x.IsSunk).Count() == 0)
                 {
-                    Console.WriteLine("You win");
+                    WriteColor(myColor,"*******************************************\n\n",null);
+                    Console.WriteLine("You are the winner!");
                     Console.WriteLine("Press any key to close window.");
                     Console.ReadKey(false);
                     break;
                 }
 
-                position = Position.GetRandomPosition();
+                WriteColor(enemyColor, "\n*****************************************\n", null);
+                WriteColor(enemyColor, "Now it's Computer's turn\n", null);
+                WriteColor(enemyColor, "*****************************************\n\n", null);
+
+                do
+                {
+                    position = Position.GetRandomPosition();
+                } while (enemyShots.Contains(position));
+
+                enemyShots.Add(position);
                 isHit = GameController.CheckIsHit(myFleet, position);
-                Console.WriteLine();
+
                 WriteColor(isHit ? hitColor : missColor, $"Computer shot in {position.Column}{position.Row} and ",
                             isHit ? "has hit your ship !" : "miss",null, "\n");
                 if (isHit)
@@ -105,12 +129,14 @@ namespace Battleship.Ascii
 
                 if (position.Ship != null && position.Ship.IsSunk)
                 {
-                    Console.WriteLine("Ship sunk");
+                    WriteColor(myColor, "Ship sunk\n\n", null);
+                    ShowStatus(myFleet, myColor);
                 }
 
                 if (myFleet.Where(x => !x.IsSunk).Count() == 0)
                 {
-                    Console.WriteLine("You Lost");
+                    WriteColor(enemyColor, "*******************************************", null, "\n");
+                    Console.WriteLine("You lost!");
                     Console.WriteLine("Press any key to close window.");
                     Console.ReadKey(false);
                     break;
@@ -119,18 +145,34 @@ namespace Battleship.Ascii
             while (true);
         }
 
+        private static void ShowStatus(List<Ship> fleet, ConsoleColor color)
+        {
+            WriteColor(color, "\nShips sunk by now:\n");
+            foreach (var ship in fleet.Where(x => x.IsSunk))
+            {
+                WriteColor("\t", ship.Color, ship.Name.PadRight(18), "\t", new string('o',ship.Size), null, "\n");
+            }
+
+            WriteColor(color, "\nStill alive:\n");
+            foreach (var ship in fleet.Where(x => !x.IsSunk))
+            {
+                WriteColor("\t", ship.Color, ship.Name.PadRight(18), "\t", new string('o', ship.Size), null, "\n");
+            }
+
+        }
+
         private static void ShowExplosion()
         {
             Console.Beep();
-
-            Console.WriteLine(@"                \         .  ./");
-            Console.WriteLine(@"              \      .:"";'.:..""   /");
-            Console.WriteLine(@"                  (M^^.^~~:.'"").");
-            Console.WriteLine(@"            -   (/  .    . . \ \)  -");
-            Console.WriteLine(@"               ((| :. ~ ^  :. .|))");
-            Console.WriteLine(@"            -   (\- |  \ /  |  /)  -");
-            Console.WriteLine(@"                 -\  \     /  /-");
-            Console.WriteLine(@"                   \  \   /  /");
+            Console.WriteLine("\n");
+            WriteColor(ConsoleColor.Red, @"                \         .  ./","\n");
+            WriteColor(ConsoleColor.Red, @"              \      .:"";'.:..""   /", "\n");
+            WriteColor(ConsoleColor.Red, @"                  (M^^.^~~:.'"").", "\n");
+            WriteColor(ConsoleColor.Red, @"            -   (/  .    . . \ \)  -", "\n");
+            WriteColor(ConsoleColor.Red, @"               ((| :. ~ ^  :. .|))", "\n");
+            WriteColor(ConsoleColor.Red, @"            -   (\- |  \ /  |  /)  -", "\n");
+            WriteColor(ConsoleColor.Red, @"                 -\  \     /  /-", "\n");
+            WriteColor(ConsoleColor.Red, @"                   \  \   /  /", null, "\n\n");
         }
 
         public static void WriteColor(params object[] prm)
@@ -153,6 +195,7 @@ namespace Battleship.Ascii
 
         private static void InitializeMyFleet()
         {
+            myShots = new List<Position>();
             myFleet = GameController.InitializeShips().ToList();
             Console.WriteLine("Please position your fleet (Game board size is from A to H and 1 to 8) :");
 
@@ -170,7 +213,7 @@ namespace Battleship.Ascii
                         {
                             break;
                         }
-                        Console.WriteLine("Invalid position, try again.");
+                        Console.WriteLine("Invalid, or already placed position, try again.");
                     } while (true);
                 }
             }
@@ -178,29 +221,141 @@ namespace Battleship.Ascii
 
         private static void InitializeEnemyFleet()
         {
+            enemyShots = new List<Position>();
+
+            Random r = new Random();
+            int rInt = r.Next(1, 5);
+
             enemyFleet = GameController.InitializeShips().ToList();
 
-            enemyFleet[0].Positions.Add(new Position(Letters.B, 4, enemyFleet[0]));
-            enemyFleet[0].Positions.Add(new Position(Letters.B, 5, enemyFleet[0]));
-            enemyFleet[0].Positions.Add(new Position(Letters.B, 6, enemyFleet[0]));
-            enemyFleet[0].Positions.Add(new Position(Letters.B, 7, enemyFleet[0]));
-            enemyFleet[0].Positions.Add(new Position(Letters.B, 8, enemyFleet[0]));
+            switch (rInt)
+            {
+                case 1:
 
-            enemyFleet[1].Positions.Add(new Position(Letters.E, 6, enemyFleet[1]));
-            enemyFleet[1].Positions.Add(new Position(Letters.E, 7, enemyFleet[1]));
-            enemyFleet[1].Positions.Add(new Position(Letters.E, 8, enemyFleet[1]));
-            enemyFleet[1].Positions.Add(new Position(Letters.E, 9, enemyFleet[1]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.B, 4, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.B, 5, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.B, 6, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.B, 7, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.B, 8, enemyFleet[0]));
 
-            enemyFleet[2].Positions.Add(new Position(Letters.A, 2, enemyFleet[2]));
-            enemyFleet[2].Positions.Add(new Position(Letters.B, 2, enemyFleet[2]));
-            enemyFleet[2].Positions.Add(new Position(Letters.C, 2, enemyFleet[2]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.E, 5, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.E, 6, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.E, 7, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.E, 8, enemyFleet[1]));
 
-            enemyFleet[3].Positions.Add(new Position(Letters.E, 1, enemyFleet[3]));
-            enemyFleet[3].Positions.Add(new Position(Letters.F, 1, enemyFleet[3]));
-            enemyFleet[3].Positions.Add(new Position(Letters.G, 1, enemyFleet[3]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.A, 2, enemyFleet[2]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.B, 2, enemyFleet[2]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.C, 2, enemyFleet[2]));
 
-            enemyFleet[4].Positions.Add(new Position(Letters.C, 5, enemyFleet[4]));
-            enemyFleet[4].Positions.Add(new Position(Letters.C, 6, enemyFleet[4]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.E, 1, enemyFleet[3]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.F, 1, enemyFleet[3]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.G, 1, enemyFleet[3]));
+
+                    enemyFleet[4].Positions.Add(new Position(Letters.C, 5, enemyFleet[4]));
+                    enemyFleet[4].Positions.Add(new Position(Letters.C, 6, enemyFleet[4]));
+                    break;
+
+                case 2:
+
+                    enemyFleet[0].Positions.Add(new Position(Letters.A, 4, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.A, 5, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.A, 6, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.A, 7, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.A, 8, enemyFleet[0]));
+
+                    enemyFleet[1].Positions.Add(new Position(Letters.F, 3, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.F, 4, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.F, 5, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.F, 6, enemyFleet[1]));
+
+                    enemyFleet[2].Positions.Add(new Position(Letters.B, 1, enemyFleet[2]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.C, 1, enemyFleet[2]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.D, 1, enemyFleet[2]));
+
+                    enemyFleet[3].Positions.Add(new Position(Letters.F, 1, enemyFleet[3]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.G, 1, enemyFleet[3]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.H, 1, enemyFleet[3]));
+
+                    enemyFleet[4].Positions.Add(new Position(Letters.D, 5, enemyFleet[4]));
+                    enemyFleet[4].Positions.Add(new Position(Letters.D, 6, enemyFleet[4]));
+                    break;
+
+                case 3:
+
+                    enemyFleet[0].Positions.Add(new Position(Letters.A, 5, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.B, 5, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.C, 5, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.D, 5, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.E, 5, enemyFleet[0]));
+
+                    enemyFleet[1].Positions.Add(new Position(Letters.G, 1, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.G, 2, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.G, 3, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.G, 4, enemyFleet[1]));
+
+                    enemyFleet[2].Positions.Add(new Position(Letters.A, 1, enemyFleet[2]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.A, 2, enemyFleet[2]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.A, 3, enemyFleet[2]));
+
+                    enemyFleet[3].Positions.Add(new Position(Letters.C, 1, enemyFleet[3]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.C, 2, enemyFleet[3]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.C, 3, enemyFleet[3]));
+
+                    enemyFleet[4].Positions.Add(new Position(Letters.A, 7, enemyFleet[4]));
+                    enemyFleet[4].Positions.Add(new Position(Letters.B, 7, enemyFleet[4]));
+                    break;
+
+                case 4:
+
+                    enemyFleet[0].Positions.Add(new Position(Letters.A, 1, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.B, 1, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.C, 1, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.D, 1, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.E, 1, enemyFleet[0]));
+
+                    enemyFleet[1].Positions.Add(new Position(Letters.G, 5, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.G, 6, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.G, 7, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.G, 8, enemyFleet[1]));
+
+                    enemyFleet[2].Positions.Add(new Position(Letters.E, 6, enemyFleet[2]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.E, 7, enemyFleet[2]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.E, 8, enemyFleet[2]));
+
+                    enemyFleet[3].Positions.Add(new Position(Letters.C, 6, enemyFleet[3]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.C, 7, enemyFleet[3]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.C, 8, enemyFleet[3]));
+
+                    enemyFleet[4].Positions.Add(new Position(Letters.A, 7, enemyFleet[4]));
+                    enemyFleet[4].Positions.Add(new Position(Letters.A, 8, enemyFleet[4]));
+                    break;
+
+                case 5:
+
+                    enemyFleet[0].Positions.Add(new Position(Letters.H, 1, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.H, 2, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.H, 3, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.H, 4, enemyFleet[0]));
+                    enemyFleet[0].Positions.Add(new Position(Letters.H, 5, enemyFleet[0]));
+
+                    enemyFleet[1].Positions.Add(new Position(Letters.C, 2, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.C, 3, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.C, 4, enemyFleet[1]));
+                    enemyFleet[1].Positions.Add(new Position(Letters.C, 5, enemyFleet[1]));
+
+                    enemyFleet[2].Positions.Add(new Position(Letters.D, 8, enemyFleet[2]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.E, 8, enemyFleet[2]));
+                    enemyFleet[2].Positions.Add(new Position(Letters.F, 8, enemyFleet[2]));
+
+                    enemyFleet[3].Positions.Add(new Position(Letters.E, 1, enemyFleet[3]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.F, 1, enemyFleet[3]));
+                    enemyFleet[3].Positions.Add(new Position(Letters.G, 1, enemyFleet[3]));
+
+                    enemyFleet[4].Positions.Add(new Position(Letters.H, 7, enemyFleet[4]));
+                    enemyFleet[4].Positions.Add(new Position(Letters.H, 8, enemyFleet[4]));
+                    break;
+            }
         }
+
     }
 }

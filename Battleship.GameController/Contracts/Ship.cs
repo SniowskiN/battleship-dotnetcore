@@ -68,6 +68,9 @@ namespace Battleship.GameController.Contracts
             if (position == null)
                 return false;
 
+            if (Positions.Contains(position))
+                return false;
+
             position.Ship = this;
             Positions.Add(position);
             return true;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Battleship.GameController.Contracts
@@ -76,6 +77,9 @@ namespace Battleship.GameController.Contracts
                 !int.TryParse(input.Substring(1, 1), out number))
                 return null;
 
+            if (number > 8)
+                return null;
+
             return new Position(letter, number);
         }
 
@@ -83,10 +87,11 @@ namespace Battleship.GameController.Contracts
         {
             int rows = 8;
             int lines = 8;
+
             var random = new Random();
             var letter = (Letters)random.Next(lines);
             var number = random.Next(rows);
-            var position = new Position(letter, number, null);
+            var position = new Position(letter, number);
             return position;
         }
 
