@@ -95,6 +95,14 @@ namespace Battleship.GameController.Contracts
             return position;
         }
 
+        public void UpdateFrom(Position source)
+        {
+            Row = source.Row;
+            Column = source.Column;
+            Ship = source.Ship;
+            _wasHit = source.WasHit;
+        }
+
         /// <summary>
         /// The equals.
         /// </summary>

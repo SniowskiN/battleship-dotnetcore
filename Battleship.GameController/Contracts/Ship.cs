@@ -5,6 +5,7 @@ namespace Battleship.GameController.Contracts
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// The ship.
@@ -21,6 +22,7 @@ namespace Battleship.GameController.Contracts
         public Ship()
         {
             Positions = new List<Position>();
+            availablePositions = new List<Position>();
         }
 
         #endregion
@@ -52,6 +54,9 @@ namespace Battleship.GameController.Contracts
         /// </summary>
         public bool IsSunk { get; set; }
 
+        
+
+        private List<Position> availablePositions;
         #endregion
 
         #region Public Methods and Operators
@@ -74,6 +79,29 @@ namespace Battleship.GameController.Contracts
             position.Ship = this;
             Positions.Add(position);
             return true;
+
+            //if (Positions.Count == 0 || availablePositions.Any(x => x == position))
+            //{
+
+
+            //    var row = position.Row;
+            //    var column = (int)position.Column;
+
+            //    var tmpPos = new Position();
+
+            //    if(row - 1 > 0)
+            //        tmpPos = new Position((Letters)column, row);
+
+
+            //    if(row + 1 < 9)
+            //        tmpPos = new Position(position.Column, position.Row +1));
+
+
+
+            //    return true;
+            //}
+
+            //return false;
         }
 
         public bool IsPlaced
@@ -86,5 +114,21 @@ namespace Battleship.GameController.Contracts
             }
         }
         #endregion
+
+        public override bool Equals(object obj)
+        {
+            var ship = obj as Ship;
+            if (ship == null)
+            {
+                return false;
+            }
+
+            return ship.Name == Name && ship.Size == Size;
+        }
+
+        public override int GetHashCode()
+        {
+            return Name.GetHashCode() + Size.GetHashCode();
+        }
     }
 }
